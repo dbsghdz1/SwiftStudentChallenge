@@ -16,7 +16,7 @@ let package = Package(
         .iOSApplication(
             name: "Signify",
             targets: ["AppModule"],
-            bundleIdentifier: "com.Signify",
+            bundleIdentifier: "com.Signify.SwiftStudentChallenge",
             teamIdentifier: "B6QMD2854G",
             displayVersion: "1.0",
             bundleVersion: "1",
@@ -31,14 +31,20 @@ let package = Package(
                 .landscapeRight,
                 .landscapeLeft,
                 .portraitUpsideDown(.when(deviceFamilies: [.pad]))
+            ],
+            capabilities: [
+                .camera(purposeString: "MyApp uses the camera to identify landmarks as you explore new places.")
             ]
         )
     ],
     targets: [
         .executableTarget(
             name: "AppModule",
-            path: "."
+            path: ".",
+            resources: [
+                .copy("Resource/MyHandPoseClassifier.mlmodelc") // copy resources to the app bundle without keeping folder structure
+            ]
         )
     ],
-    swiftLanguageVersions: [.v6]
+    swiftLanguageVersions: [.version("6")]
 )
