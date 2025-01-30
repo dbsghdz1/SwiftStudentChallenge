@@ -4,17 +4,17 @@ import CoreML
 
 struct ContentView: View {
     
-    @State private var capturedImage : UIImage? = nil
-    @State private var isCustomCameraViewPresented = false
+    @State var cameraPreviewView: CameraPreviewView
     
     var body: some View {
         VStack {
-            Text("")
+            cameraPreviewView
+                .ignoresSafeArea()
+                .onAppear(perform: {
+                    Task {
+                        await cameraPreviewView.setCamera()
+                    }
+                })
         }
     }
 }
-
-#Preview {
-    ContentView()
-}
-
