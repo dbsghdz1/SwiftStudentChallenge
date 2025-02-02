@@ -16,7 +16,7 @@ let package = Package(
         .iOSApplication(
             name: "Signify",
             targets: ["AppModule"],
-            bundleIdentifier: "com.Signify",
+            bundleIdentifier: "com.Signify.SSC",
             teamIdentifier: "B6QMD2854G",
             displayVersion: "1.0",
             bundleVersion: "1",
@@ -31,6 +31,9 @@ let package = Package(
                 .landscapeRight,
                 .landscapeLeft,
                 .portraitUpsideDown(.when(deviceFamilies: [.pad]))
+            ],
+            capabilities: [
+                .camera(purposeString: "my app use camera")
             ]
         )
     ],
@@ -40,5 +43,5 @@ let package = Package(
             path: "."
         )
     ],
-    swiftLanguageVersions: [.v6]
+    swiftLanguageVersions: [.version("6")]
 )
