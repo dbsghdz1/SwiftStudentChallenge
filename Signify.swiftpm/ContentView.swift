@@ -1,12 +1,17 @@
 import SwiftUI
 
 struct ContentView: View {
+    
+    private let cameraService = CameraService()
     var body: some View {
         VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundColor(.accentColor)
-            Text("Hello, world!")
+            CameraPreviewView(cameraService: cameraService)
+                .ignoresSafeArea()
+        }
+        .onAppear {
+            Task {
+                await cameraService.setCamera()
+            }
         }
     }
 }
