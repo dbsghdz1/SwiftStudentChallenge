@@ -16,7 +16,7 @@ let package = Package(
         .iOSApplication(
             name: "Signify",
             targets: ["AppModule"],
-            bundleIdentifier: "com.Signify",
+            bundleIdentifier: "com.Signify.SSC",
             teamIdentifier: "B6QMD2854G",
             displayVersion: "1.0",
             bundleVersion: "1",
