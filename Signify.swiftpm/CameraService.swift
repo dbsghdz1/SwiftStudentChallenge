@@ -29,7 +29,7 @@ class CameraService {
         guard await checkPermission() else { return }
         
         preview.videoPreviewLayer.session = captureSession
-        captureSession.beginConfiguration()
+        
         guard
             let videoDevice = AVCaptureDevice.default(
             .builtInWideAngleCamera,
@@ -45,12 +45,10 @@ class CameraService {
         captureSession.addInput(videoDeviceInput)
         
         let photoOutput = AVCapturePhotoOutput()
-        guard captureSession.canAddOutput(photoOutput) else { return }
-        
+        guard
+            captureSession.canAddOutput(photoOutput) else { return }
         
         captureSession.addOutput(photoOutput)
-        captureSession.commitConfiguration()
-        
         captureSession.startRunning()
     }
 }
