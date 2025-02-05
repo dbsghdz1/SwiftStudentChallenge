@@ -40,7 +40,10 @@ let package = Package(
     targets: [
         .executableTarget(
             name: "AppModule",
-            path: "."
+            path: ".",
+            resources: [
+                .copy("MLModel")
+            ]
         )
     ],
     swiftLanguageVersions: [.version("6")]

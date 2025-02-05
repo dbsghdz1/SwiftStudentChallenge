@@ -14,6 +14,9 @@ class CameraPreview: UIView {
     }
     
     var videoPreviewLayer: AVCaptureVideoPreviewLayer {
-        return layer as! AVCaptureVideoPreviewLayer
+        guard let layer = layer as? AVCaptureVideoPreviewLayer else {
+            fatalError("CameraPreview's layer is not an AVCaptureVideoPreviewLayer")
+        }
+        return layer
     }
 }
