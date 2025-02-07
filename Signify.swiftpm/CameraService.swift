@@ -77,7 +77,7 @@ final class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelegat
         _ output: AVCaptureOutput,
         didOutput sampleBuffer: CMSampleBuffer,
         from connection: AVCaptureConnection
-    ) {
+    ) async {
         guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
         
         let handler = VNImageRequestHandler(cvPixelBuffer: pixelBuffer, options: [:])
@@ -128,7 +128,7 @@ final class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelegat
         return nil
     }
     
-    func runCoreMLModel(_ input: MLMultiArray) async {
+    func runCoreMLModel(_ input: MLMultiArray) {
         guard let model = mlModel else {
             print("🚨 CoreML 모델이 로드되지 않았습니다.")
             return
@@ -137,10 +137,7 @@ final class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelegat
         do {
             let inputFeatureProvider = try MyHandPoseClassifierInput(poses: input)
             let predicition = try model.prediction(input: inputFeatureProvider)
-            
-            DispatchQueue.main.async {
-                print("손 감지\(predicition.label)")
-            }
+            print(predicition.label)
         } catch {
             print(error)
         }
