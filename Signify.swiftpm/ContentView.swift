@@ -1,12 +1,17 @@
 import SwiftUI
+import Combine
 
 struct ContentView: View {
     
-    private let cameraService = CameraService()
+    @ObservedObject var cameraService = CameraService()
+    
     var body: some View {
-        VStack {
-            CameraPreviewView(cameraService: cameraService)
-                .ignoresSafeArea()
+        ZStack {
+            VStack {
+                CameraPreviewView(cameraService: cameraService)
+                    .ignoresSafeArea()
+            }
+            Text(cameraService.alphabet)
         }
         .onAppear {
             Task {

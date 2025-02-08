@@ -8,10 +8,14 @@
 import AVFoundation
 import Vision
 import CoreML
+import Combine
 
-//@MainActor
-final class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate {
+
+final class CameraService: NSObject,
+                                       AVCaptureVideoDataOutputSampleBufferDelegate,
+                                       ObservableObject {
     
+    @Published var alphabet: String = ""
     @MainActor
     let preview = CameraPreview()
     private let captureSession = AVCaptureSession()
@@ -24,7 +28,7 @@ final class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelegat
         }
     }()
     
-    private lazy var handPoseRequest: VNDetectHumanHandPoseRequest = {
+    private var handPoseRequest: VNDetectHumanHandPoseRequest = {
         let request = VNDetectHumanHandPoseRequest()
         request.maximumHandCount = 1
         return request
@@ -73,11 +77,11 @@ final class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelegat
         captureSession.startRunning()
     }
     
-    func captureOutput(
+    internal func captureOutput(
         _ output: AVCaptureOutput,
         didOutput sampleBuffer: CMSampleBuffer,
         from connection: AVCaptureConnection
-    ) async {
+    )  {
         guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
         
         let handler = VNImageRequestHandler(cvPixelBuffer: pixelBuffer, options: [:])
@@ -135,9 +139,13 @@ final class CameraService: NSObject, AVCaptureVideoDataOutputSampleBufferDelegat
         }
         
         do {
-            let inputFeatureProvider = try MyHandPoseClassifierInput(poses: input)
-            let predicition = try model.prediction(input: inputFeatureProvider)
-            print(predicition.label)
+            let inputFeatureProvider = MyHandPoseClassifierInput(poses: input)
+            let prediction = try model.prediction(input: inputFeatureProvider)
+            
+            self.alphabet = prediction.label
+//            DispatchQueue.main.async {
+//                self.alphabet = prediction.label
+//            }
         } catch {
             print(error)
         }
