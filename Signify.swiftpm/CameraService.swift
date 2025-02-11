@@ -5,34 +5,35 @@
 //  Created by 김윤홍 on 2/3/25.
 //
 
-import AVFoundation
+@preconcurrency import AVFoundation
 import Vision
 import CoreML
 import Combine
 
-
+@available(iOS 17.0, *)
+@Observable
 final class CameraService: NSObject,
-                                       AVCaptureVideoDataOutputSampleBufferDelegate,
-                                       ObservableObject {
+                           AVCaptureVideoDataOutputSampleBufferDelegate,
+                           ObservableObject, Sendable {
     
-    @Published var alphabet: String = ""
+    @MainActor
+    var alphabet: String = ""
     @MainActor
     let preview = CameraPreview()
     private let captureSession = AVCaptureSession()
     
-    private let mlModel: MyHandPoseClassifier? = {
-        do {
-            return try MyHandPoseClassifier()
-        } catch {
-            return nil
-        }
-    }()
-    
-    private var handPoseRequest: VNDetectHumanHandPoseRequest = {
-        let request = VNDetectHumanHandPoseRequest()
-        request.maximumHandCount = 1
-        return request
-    }()
+//    private let mlModel: MyHandPoseClassifier? = {
+//        do {
+//            return try MyHandPoseClassifier()
+//        } catch {
+//            return nil
+//        }
+//    }()
+//    private var handPoseRequest: VNDetectHumanHandPoseRequest = {
+//        let request = VNDetectHumanHandPoseRequest()
+//        request.maximumHandCount = 1
+//        return request
+//    }()
     
     @MainActor
     func checkPermission() async -> Bool {
@@ -83,6 +84,7 @@ final class CameraService: NSObject,
         from connection: AVCaptureConnection
     )  {
         guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
+        let handPoseRequest =  VNDetectHumanHandPoseRequest()
         
         let handler = VNImageRequestHandler(cvPixelBuffer: pixelBuffer, options: [:])
         
@@ -93,7 +95,12 @@ final class CameraService: NSObject,
                 let handPoints = try observation.recognizedPoints(.all)
                 
                 if let inputArray = processHandPoints(handPoints) {
-                   runCoreMLModel(inputArray)
+                    Task {
+                        await MainActor.run {
+                            print("")
+                        }
+                    }
+                    runCoreMLModel(inputArray)
                 }
             }
         } catch {
@@ -132,20 +139,28 @@ final class CameraService: NSObject,
         return nil
     }
     
+    @MainActor
+    func updateAlphabet(_ label: String) async {
+        self.alphabet = label
+    }
+    
     func runCoreMLModel(_ input: MLMultiArray) {
-        guard let model = mlModel else {
-            print("🚨 CoreML 모델이 로드되지 않았습니다.")
-            return
-        }
-        
+//        guard let model = mlModel else {
+//            print("🚨 CoreML 모델이 로드되지 않았습니다.")
+//            return
+//        }
+        let model = MyHandPoseClassifier()
         do {
             let inputFeatureProvider = MyHandPoseClassifierInput(poses: input)
             let prediction = try model.prediction(input: inputFeatureProvider)
+            let predictedLabel = String(prediction.label)
             
-            self.alphabet = prediction.label
-//            DispatchQueue.main.async {
-//                self.alphabet = prediction.label
-//            }
+            Task {
+                await MainActor.run {
+                    self.alphabet = predictedLabel
+                }
+                
+            }
         } catch {
             print(error)
         }

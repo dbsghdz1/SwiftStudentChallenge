@@ -1,6 +1,7 @@
 import SwiftUI
 import Combine
 
+@available(iOS 17.0, *)
 struct ContentView: View {
     
     @ObservedObject var cameraService = CameraService()

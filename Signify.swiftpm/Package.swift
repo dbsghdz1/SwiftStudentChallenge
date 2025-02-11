@@ -45,6 +45,5 @@ let package = Package(
                 .copy("MLModel")
             ]
         )
-    ],
-    swiftLanguageVersions: [.version("6")]
+    ]
 )
