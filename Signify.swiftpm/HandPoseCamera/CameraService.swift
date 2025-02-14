@@ -14,26 +14,14 @@ import Combine
 @Observable
 final class CameraService: NSObject,
                            AVCaptureVideoDataOutputSampleBufferDelegate,
-                           ObservableObject, Sendable {
+                           ObservableObject,
+                           Sendable {
     
     @MainActor
     var alphabet: String = ""
     @MainActor
     let preview = CameraPreview()
     private let captureSession = AVCaptureSession()
-    
-//    private let mlModel: MyHandPoseClassifier? = {
-//        do {
-//            return try MyHandPoseClassifier()
-//        } catch {
-//            return nil
-//        }
-//    }()
-//    private var handPoseRequest: VNDetectHumanHandPoseRequest = {
-//        let request = VNDetectHumanHandPoseRequest()
-//        request.maximumHandCount = 1
-//        return request
-//    }()
     
     @MainActor
     func checkPermission() async -> Bool {
@@ -75,6 +63,7 @@ final class CameraService: NSObject,
         
         captureSession.addOutput(videoOutput)
         videoOutput.setSampleBufferDelegate(self, queue: DispatchQueue(label: "videoQueue"))
+        preview.videoPreviewLayer.setAffineTransform(CGAffineTransform(rotationAngle: -.pi / 2))
         captureSession.startRunning()
     }
     
@@ -85,8 +74,11 @@ final class CameraService: NSObject,
     )  {
         guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
         let handPoseRequest =  VNDetectHumanHandPoseRequest()
+        handPoseRequest.maximumHandCount = 1
+        handPoseRequest.revision = VNDetectContourRequestRevision1
         
         let handler = VNImageRequestHandler(cvPixelBuffer: pixelBuffer, options: [:])
+        
         
         do {
             try handler.perform([handPoseRequest])
@@ -139,27 +131,23 @@ final class CameraService: NSObject,
         return nil
     }
     
-    @MainActor
-    func updateAlphabet(_ label: String) async {
-        self.alphabet = label
-    }
-    
     func runCoreMLModel(_ input: MLMultiArray) {
-//        guard let model = mlModel else {
-//            print("🚨 CoreML 모델이 로드되지 않았습니다.")
-//            return
-//        }
         let model = MyHandPoseClassifier()
+        
         do {
             let inputFeatureProvider = MyHandPoseClassifierInput(poses: input)
+            let handPosePrediction = try model.prediction(poses: input)
+            let confidence = handPosePrediction.labelProbabilities[handPosePrediction.label]!
             let prediction = try model.prediction(input: inputFeatureProvider)
             let predictedLabel = String(prediction.label)
             
             Task {
                 await MainActor.run {
-                    self.alphabet = predictedLabel
+                    if confidence > 0.9 {
+                        print("정확도: \(confidence) : 예측:\(predictedLabel)")
+                        self.alphabet = predictedLabel
+                    }
                 }
-                
             }
         } catch {
             print(error)
