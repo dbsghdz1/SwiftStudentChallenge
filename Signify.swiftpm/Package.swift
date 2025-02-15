@@ -27,13 +27,13 @@ let package = Package(
                 .phone
             ],
             supportedInterfaceOrientations: [
-                .portrait,
                 .landscapeRight,
-                .landscapeLeft,
                 .portraitUpsideDown(.when(deviceFamilies: [.pad]))
             ],
             capabilities: [
-                .camera(purposeString: "my app use camera")
+                .camera(purposeString: "Signify requires access to your camera and microphone to provide real-time subtitles. Please grant permission to continue."),
+                .microphone(purposeString: "To use Signify, please allow access to your camera for sign language recognition and your microphone for speech transcription."),
+                .speechRecognition(purposeString: "To use Signify, please allow access to your camera for sign language recognition and your microphone for speech transcription.")
             ]
         )
     ],
