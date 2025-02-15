@@ -5,18 +5,24 @@ import Combine
 struct ContentView: View {
     
     @ObservedObject var cameraService = CameraService()
+    @StateObject var voiceService = VoiceService()
     
     var body: some View {
         ZStack {
-            VStack {
-                CameraPreviewView(cameraService: cameraService)
-                    .ignoresSafeArea()
+            
+            CameraPreviewView(cameraService: cameraService)
+            
+            HStack {
+                Text(cameraService.alphabet)
+                    .background(Color.black)
+                Text(voiceService.transcript)
+                    .background(Color.black)
             }
-            Text(cameraService.alphabet)
         }
         .onAppear {
             Task {
                 await cameraService.setCamera()
+                voiceService.startSpeaking()
             }
         }
     }
