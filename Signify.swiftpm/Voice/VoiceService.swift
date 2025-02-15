@@ -33,19 +33,19 @@ actor VoiceService: ObservableObject {
         }
     }
     
-    @MainActor func startTranscribing() {
+    @MainActor func startSpeaking() {
         Task {
             await transcribe()
         }
     }
     
-    @MainActor func resetTranscript() {
+    @MainActor func resetSpeaking() {
         Task {
             await reset()
         }
     }
     
-    @MainActor func stopTranscribing() {
+    @MainActor func stopSpeaking() {
         Task {
             await reset()
         }

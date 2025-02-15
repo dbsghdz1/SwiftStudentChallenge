@@ -8,7 +8,6 @@
 @preconcurrency import AVFoundation
 import Vision
 import CoreML
-import Combine
 
 @available(iOS 17.0, *)
 @Observable
@@ -146,6 +145,8 @@ final class CameraService: NSObject,
                     if confidence > 0.9 {
                         print("정확도: \(confidence) : 예측:\(predictedLabel)")
                         self.alphabet = predictedLabel
+                    } else {
+                        print(predictedLabel)
                     }
                 }
             }
