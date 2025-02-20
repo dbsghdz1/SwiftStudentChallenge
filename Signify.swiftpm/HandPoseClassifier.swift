@@ -1,5 +1,5 @@
 //
-// MyHandPoseClassifier.swift
+// HandPoseClassifier.swift
 //
 // This file was automatically generated and should not be edited.
 //
@@ -9,7 +9,7 @@ import CoreML
 
 /// Model Prediction Input Type
 @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, visionOS 1.0, *)
-class MyHandPoseClassifierInput : MLFeatureProvider {
+class HandPoseClassifierInput : MLFeatureProvider {
 
     /// A hand pose to classify. Its multiarray encoding uses the first dimension to index time over 1 frame. The second dimension indexes x, y, and confidence of hand pose keypoint locations. The last dimension indexes the keypoint type, ordered as wrist, thumbCMC, thumbMP, thumbIP, thumbTip, indexMCP, indexPIP, indexDIP, indexTip, middleMCP, middlePIP, middleDIP, middleTip, ringMCP, ringPIP, ringDIP, ringTip, littleMCP, littlePIP, littleDIP, littleTip. as 1 × 3 × 21 3-dimensional array of floats
     var poses: MLMultiArray
@@ -37,7 +37,7 @@ class MyHandPoseClassifierInput : MLFeatureProvider {
 
 /// Model Prediction Output Type
 @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, visionOS 1.0, *)
-class MyHandPoseClassifierOutput : MLFeatureProvider {
+class HandPoseClassifierOutput : MLFeatureProvider {
 
     /// Source provided by CoreML
     private let provider : MLFeatureProvider
@@ -72,20 +72,20 @@ class MyHandPoseClassifierOutput : MLFeatureProvider {
 
 /// Class for model loading and prediction
 @available(macOS 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, visionOS 1.0, *)
-class MyHandPoseClassifier {
+class HandPoseClassifier {
     let model: MLModel
 
     /// URL of model assuming it was installed in the same bundle as this class
     class var urlOfModelInThisBundle : URL {
         let bundle = Bundle(for: self)
-        return bundle.url(forResource: "MLModel/MyHandPoseClassifier", withExtension:"mlmodelc")!
+        return bundle.url(forResource: "MLModel/HandPoseClassifier", withExtension:"mlmodelc")!
     }
 
     /**
-        Construct MyHandPoseClassifier instance with an existing MLModel object.
+        Construct HandPoseClassifier instance with an existing MLModel object.
 
-        Usually the application does not use this initializer unless it makes a subclass of MyHandPoseClassifier.
-        Such application may want to use `MLModel(contentsOfURL:configuration:)` and `MyHandPoseClassifier.urlOfModelInThisBundle` to create a MLModel object to pass-in.
+        Usually the application does not use this initializer unless it makes a subclass of HandPoseClassifier.
+        Such application may want to use `MLModel(contentsOfURL:configuration:)` and `HandPoseClassifier.urlOfModelInThisBundle` to create a MLModel object to pass-in.
 
         - parameters:
           - model: MLModel object
@@ -95,7 +95,7 @@ class MyHandPoseClassifier {
     }
 
     /**
-        Construct MyHandPoseClassifier instance by automatically loading the model from the app's bundle.
+        Construct HandPoseClassifier instance by automatically loading the model from the app's bundle.
     */
     @available(*, deprecated, message: "Use init(configuration:) instead and handle errors appropriately.")
     convenience init() {
@@ -115,7 +115,7 @@ class MyHandPoseClassifier {
     }
 
     /**
-        Construct MyHandPoseClassifier instance with explicit path to mlmodelc file
+        Construct HandPoseClassifier instance with explicit path to mlmodelc file
         - parameters:
            - modelURL: the file url of the model
 
@@ -139,7 +139,7 @@ class MyHandPoseClassifier {
     }
 
     /**
-        Construct MyHandPoseClassifier instance asynchronously with optional configuration.
+        Construct HandPoseClassifier instance asynchronously with optional configuration.
 
         Model loading may take time when the model content is not immediately available (e.g. encrypted model). Use this factory method especially when the caller is on the main thread.
 
@@ -148,12 +148,12 @@ class MyHandPoseClassifier {
           - handler: the completion handler to be called when the model loading completes successfully or unsuccessfully
     */
     @available(macOS 11.0, iOS 14.0, tvOS 14.0, watchOS 7.0, visionOS 1.0, *)
-    class func load(configuration: MLModelConfiguration = MLModelConfiguration(), completionHandler handler: @escaping (Swift.Result<MyHandPoseClassifier, Error>) -> Void) {
+    class func load(configuration: MLModelConfiguration = MLModelConfiguration(), completionHandler handler: @escaping (Swift.Result<HandPoseClassifier, Error>) -> Void) {
         load(contentsOf: self.urlOfModelInThisBundle, configuration: configuration, completionHandler: handler)
     }
 
     /**
-        Construct MyHandPoseClassifier instance asynchronously with optional configuration.
+        Construct HandPoseClassifier instance asynchronously with optional configuration.
 
         Model loading may take time when the model content is not immediately available (e.g. encrypted model). Use this factory method especially when the caller is on the main thread.
 
@@ -161,12 +161,12 @@ class MyHandPoseClassifier {
           - configuration: the desired model configuration
     */
     @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
-    class func load(configuration: MLModelConfiguration = MLModelConfiguration()) async throws -> MyHandPoseClassifier {
+    class func load(configuration: MLModelConfiguration = MLModelConfiguration()) async throws -> HandPoseClassifier {
         try await load(contentsOf: self.urlOfModelInThisBundle, configuration: configuration)
     }
 
     /**
-        Construct MyHandPoseClassifier instance asynchronously with URL of the .mlmodelc directory with optional configuration.
+        Construct HandPoseClassifier instance asynchronously with URL of the .mlmodelc directory with optional configuration.
 
         Model loading may take time when the model content is not immediately available (e.g. encrypted model). Use this factory method especially when the caller is on the main thread.
 
@@ -176,19 +176,19 @@ class MyHandPoseClassifier {
           - handler: the completion handler to be called when the model loading completes successfully or unsuccessfully
     */
     @available(macOS 11.0, iOS 14.0, tvOS 14.0, watchOS 7.0, visionOS 1.0, *)
-    class func load(contentsOf modelURL: URL, configuration: MLModelConfiguration = MLModelConfiguration(), completionHandler handler: @escaping (Swift.Result<MyHandPoseClassifier, Error>) -> Void) {
+    class func load(contentsOf modelURL: URL, configuration: MLModelConfiguration = MLModelConfiguration(), completionHandler handler: @escaping (Swift.Result<HandPoseClassifier, Error>) -> Void) {
         MLModel.load(contentsOf: modelURL, configuration: configuration) { result in
             switch result {
             case .failure(let error):
                 handler(.failure(error))
             case .success(let model):
-                handler(.success(MyHandPoseClassifier(model: model)))
+                handler(.success(HandPoseClassifier(model: model)))
             }
         }
     }
 
     /**
-        Construct MyHandPoseClassifier instance asynchronously with URL of the .mlmodelc directory with optional configuration.
+        Construct HandPoseClassifier instance asynchronously with URL of the .mlmodelc directory with optional configuration.
 
         Model loading may take time when the model content is not immediately available (e.g. encrypted model). Use this factory method especially when the caller is on the main thread.
 
@@ -197,9 +197,9 @@ class MyHandPoseClassifier {
           - configuration: the desired model configuration
     */
     @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
-    class func load(contentsOf modelURL: URL, configuration: MLModelConfiguration = MLModelConfiguration()) async throws -> MyHandPoseClassifier {
+    class func load(contentsOf modelURL: URL, configuration: MLModelConfiguration = MLModelConfiguration()) async throws -> HandPoseClassifier {
         let model = try await MLModel.load(contentsOf: modelURL, configuration: configuration)
-        return MyHandPoseClassifier(model: model)
+        return HandPoseClassifier(model: model)
     }
 
     /**
@@ -208,13 +208,13 @@ class MyHandPoseClassifier {
         It uses the default function if the model has multiple functions.
 
         - parameters:
-           - input: the input to the prediction as MyHandPoseClassifierInput
+           - input: the input to the prediction as HandPoseClassifierInput
 
         - throws: an NSError object that describes the problem
 
-        - returns: the result of the prediction as MyHandPoseClassifierOutput
+        - returns: the result of the prediction as HandPoseClassifierOutput
     */
-    func prediction(input: MyHandPoseClassifierInput) throws -> MyHandPoseClassifierOutput {
+    func prediction(input: HandPoseClassifierInput) throws -> HandPoseClassifierOutput {
         try prediction(input: input, options: MLPredictionOptions())
     }
 
@@ -224,16 +224,16 @@ class MyHandPoseClassifier {
         It uses the default function if the model has multiple functions.
 
         - parameters:
-           - input: the input to the prediction as MyHandPoseClassifierInput
+           - input: the input to the prediction as HandPoseClassifierInput
            - options: prediction options
 
         - throws: an NSError object that describes the problem
 
-        - returns: the result of the prediction as MyHandPoseClassifierOutput
+        - returns: the result of the prediction as HandPoseClassifierOutput
     */
-    func prediction(input: MyHandPoseClassifierInput, options: MLPredictionOptions) throws -> MyHandPoseClassifierOutput {
+    func prediction(input: HandPoseClassifierInput, options: MLPredictionOptions) throws -> HandPoseClassifierOutput {
         let outFeatures = try model.prediction(from: input, options: options)
-        return MyHandPoseClassifierOutput(features: outFeatures)
+        return HandPoseClassifierOutput(features: outFeatures)
     }
 
     /**
@@ -242,17 +242,17 @@ class MyHandPoseClassifier {
         It uses the default function if the model has multiple functions.
 
         - parameters:
-           - input: the input to the prediction as MyHandPoseClassifierInput
+           - input: the input to the prediction as HandPoseClassifierInput
            - options: prediction options
 
         - throws: an NSError object that describes the problem
 
-        - returns: the result of the prediction as MyHandPoseClassifierOutput
+        - returns: the result of the prediction as HandPoseClassifierOutput
     */
     @available(macOS 14.0, iOS 17.0, tvOS 17.0, watchOS 10.0, visionOS 1.0, *)
-    func prediction(input: MyHandPoseClassifierInput, options: MLPredictionOptions = MLPredictionOptions()) async throws -> MyHandPoseClassifierOutput {
+    func prediction(input: HandPoseClassifierInput, options: MLPredictionOptions = MLPredictionOptions()) async throws -> HandPoseClassifierOutput {
         let outFeatures = try await model.prediction(from: input, options: options)
-        return MyHandPoseClassifierOutput(features: outFeatures)
+        return HandPoseClassifierOutput(features: outFeatures)
     }
 
     /**
@@ -265,10 +265,10 @@ class MyHandPoseClassifier {
 
         - throws: an NSError object that describes the problem
 
-        - returns: the result of the prediction as MyHandPoseClassifierOutput
+        - returns: the result of the prediction as HandPoseClassifierOutput
     */
-    func prediction(poses: MLMultiArray) throws -> MyHandPoseClassifierOutput {
-        let input_ = MyHandPoseClassifierInput(poses: poses)
+    func prediction(poses: MLMultiArray) throws -> HandPoseClassifierOutput {
+        let input_ = HandPoseClassifierInput(poses: poses)
         return try prediction(input: input_)
     }
 
@@ -282,12 +282,12 @@ class MyHandPoseClassifier {
 
         - throws: an NSError object that describes the problem
 
-        - returns: the result of the prediction as MyHandPoseClassifierOutput
+        - returns: the result of the prediction as HandPoseClassifierOutput
     */
 
     @available(macOS 12.0, iOS 15.0, tvOS 15.0, watchOS 8.0, visionOS 1.0, *)
-    func prediction(poses: MLShapedArray<Float>) throws -> MyHandPoseClassifierOutput {
-        let input_ = MyHandPoseClassifierInput(poses: poses)
+    func prediction(poses: MLShapedArray<Float>) throws -> HandPoseClassifierOutput {
+        let input_ = HandPoseClassifierInput(poses: poses)
         return try prediction(input: input_)
     }
 
@@ -297,21 +297,21 @@ class MyHandPoseClassifier {
         It uses the default function if the model has multiple functions.
 
         - parameters:
-           - inputs: the inputs to the prediction as [MyHandPoseClassifierInput]
+           - inputs: the inputs to the prediction as [HandPoseClassifierInput]
            - options: prediction options
 
         - throws: an NSError object that describes the problem
 
-        - returns: the result of the prediction as [MyHandPoseClassifierOutput]
+        - returns: the result of the prediction as [HandPoseClassifierOutput]
     */
-    func predictions(inputs: [MyHandPoseClassifierInput], options: MLPredictionOptions = MLPredictionOptions()) throws -> [MyHandPoseClassifierOutput] {
+    func predictions(inputs: [HandPoseClassifierInput], options: MLPredictionOptions = MLPredictionOptions()) throws -> [HandPoseClassifierOutput] {
         let batchIn = MLArrayBatchProvider(array: inputs)
         let batchOut = try model.predictions(from: batchIn, options: options)
-        var results : [MyHandPoseClassifierOutput] = []
+        var results : [HandPoseClassifierOutput] = []
         results.reserveCapacity(inputs.count)
         for i in 0..<batchOut.count {
             let outProvider = batchOut.features(at: i)
-            let result =  MyHandPoseClassifierOutput(features: outProvider)
+            let result =  HandPoseClassifierOutput(features: outProvider)
             results.append(result)
         }
         return results
