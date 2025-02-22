@@ -8,6 +8,7 @@
 @preconcurrency import AVFoundation
 import Vision
 import CoreML
+import UIKit
 
 @available(iOS 17.0, *)
 @Observable
@@ -20,7 +21,7 @@ final class CameraService: NSObject,
     var alphabet: String = ""
     @MainActor
     let preview = CameraPreview()
-    private let captureSession = AVCaptureSession()
+    let captureSession = AVCaptureSession()
     
     @MainActor
     func checkPermission() async -> Bool {
@@ -37,32 +38,43 @@ final class CameraService: NSObject,
     
     @MainActor
     func setCamera() async {
-        
         guard await checkPermission() else { return }
         
         preview.videoPreviewLayer.session = captureSession
         
-        guard
-            let videoDevice = AVCaptureDevice.default(
-                .builtInWideAngleCamera,
-                for: .video,
-                position: .front
-            ) else { return }
+        guard let videoDevice = AVCaptureDevice.default(
+            .builtInWideAngleCamera,
+            for: .video,
+            position: .front
+        ) else { return }
         
-        guard
-            let videoDeviceInput = try? AVCaptureDeviceInput(device: videoDevice),
-            captureSession.canAddInput(videoDeviceInput)
-        else { return }
-        
-        captureSession.addInput(videoDeviceInput)
+        do {
+            let videoDeviceInput = try AVCaptureDeviceInput(device: videoDevice)
+            if captureSession.canAddInput(videoDeviceInput) {
+                captureSession.addInput(videoDeviceInput)
+            }
+            
+            // 🎯 프레임 속도 설정: 30fps
+            try videoDevice.lockForConfiguration()
+            videoDevice.activeVideoMinFrameDuration = CMTimeMake(value: 1, timescale: 30)
+            videoDevice.activeVideoMaxFrameDuration = CMTimeMake(value: 1, timescale: 30)
+            videoDevice.unlockForConfiguration()
+            
+        } catch {
+            print("🚨 카메라 설정 오류: \(error)")
+            return
+        }
         
         let videoOutput = AVCaptureVideoDataOutput()
-        guard
-            captureSession.canAddOutput(videoOutput) else { return }
+        guard captureSession.canAddOutput(videoOutput) else { return }
         
         captureSession.addOutput(videoOutput)
         videoOutput.setSampleBufferDelegate(self, queue: DispatchQueue(label: "videoQueue"))
-        preview.videoPreviewLayer.setAffineTransform(CGAffineTransform(rotationAngle: -.pi / 2))
+        
+        if let connection = preview.videoPreviewLayer.connection {
+            connection.videoOrientation = .landscapeRight
+        }
+        
         captureSession.startRunning()
     }
     
@@ -74,7 +86,7 @@ final class CameraService: NSObject,
         guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
         let handPoseRequest =  VNDetectHumanHandPoseRequest()
         handPoseRequest.maximumHandCount = 1
-        handPoseRequest.revision = VNDetectContourRequestRevision1
+        handPoseRequest.revision = VNDetectHumanHandPoseRequestRevision1
         
         let handler = VNImageRequestHandler(cvPixelBuffer: pixelBuffer, options: [:])
         
@@ -100,24 +112,23 @@ final class CameraService: NSObject,
     }
     
     func processHandPoints(_ handPoints: [VNHumanHandPoseObservation.JointName: VNRecognizedPoint]) -> MLMultiArray? {
-        
         let joints: [VNHumanHandPoseObservation.JointName] = [
-            .wrist, .thumbTip, .thumbIP, .thumbMP, .thumbCMC,
-            .indexTip, .indexDIP, .indexPIP, .indexMCP,
-            .middleTip, .middleDIP, .middlePIP, .middleMCP,
-            .ringTip, .ringDIP, .ringPIP, .ringMCP,
-            .littleTip, .littleDIP, .littlePIP, .littleMCP
+            .wrist, .thumbCMC, .thumbMP, .thumbIP, .thumbTip,
+            .indexMCP, .indexPIP, .indexDIP, .indexTip,
+            .middleMCP, .middlePIP, .middleDIP, .middleTip,
+            .ringMCP, .ringPIP, .ringDIP, .ringTip,
+            .littleMCP, .littlePIP, .littleDIP, .littleTip
         ]
         
         do {
             let multiArray = try MLMultiArray(shape: [1, 3, 21], dataType: .float32)
-            
+
             for (index, joint) in joints.enumerated() {
                 if let point = handPoints[joint] {
                     let x = Float(point.location.x)
                     let y = Float(point.location.y)
                     let confidence = Float(point.confidence)
-                    
+
                     multiArray[[0, 0, index] as [NSNumber]] = NSNumber(value: x)
                     multiArray[[0, 1, index] as [NSNumber]] = NSNumber(value: y)
                     multiArray[[0, 2, index] as [NSNumber]] = NSNumber(value: confidence)
@@ -125,16 +136,20 @@ final class CameraService: NSObject,
             }
             return multiArray
         } catch {
-            print(error)
+            print("🚨 MLMultiArray 생성 오류: \(error)")
         }
         return nil
     }
-    
     func runCoreMLModel(_ input: MLMultiArray) {
-        let model = MyHandPoseClassifier()
+//        do {
+//            let config = MLModelConfiguration()
+//            let model = try HandPoseClassifier(configuration: config)
+//        }
         
         do {
-            let inputFeatureProvider = MyHandPoseClassifierInput(poses: input)
+            let config = MLModelConfiguration()
+            let model = try HandPoseClassifier(configuration: config)
+            let inputFeatureProvider = HandPoseClassifierInput(poses: input)
             let handPosePrediction = try model.prediction(poses: input)
             let confidence = handPosePrediction.labelProbabilities[handPosePrediction.label]!
             let prediction = try model.prediction(input: inputFeatureProvider)
@@ -143,7 +158,7 @@ final class CameraService: NSObject,
             Task {
                 await MainActor.run {
                     if confidence > 0.9 {
-                        print("정확도: \(confidence) : 예측:\(predictedLabel)")
+//                        print("정확도: \(confidence) : 예측:\(predictedLabel)")
                         self.alphabet = predictedLabel
                     } else {
                         print(predictedLabel)

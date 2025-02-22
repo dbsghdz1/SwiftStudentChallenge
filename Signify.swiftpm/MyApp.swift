@@ -6,7 +6,7 @@ struct MyApp: App {
     var body: some Scene {
         WindowGroup {
             if #available(iOS 17.0, *) {
-                ContentView()
+                MainScreen()
             } else {
                 // Fallback on earlier versions
             }

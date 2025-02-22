@@ -20,11 +20,11 @@ struct MainScreen: View {
             TabView(selection: $currentPage) {
                 
                 Tab("Home", systemImage: "video", value: .home) {
-                    Text("home1")
+                    ContentView(cameraService: CameraService(), voiceService: VoiceService())
                 }
                 
                 Tab("Learn ASL", systemImage: "book", value: .home) {
-                    Text("Learn ASL")
+                    LearningScreen()
                 }
                 
                 Tab("How to Use", systemImage: "questionmark.text.page", value: .home) {

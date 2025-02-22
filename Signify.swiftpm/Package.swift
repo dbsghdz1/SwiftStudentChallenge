@@ -27,8 +27,7 @@ let package = Package(
                 .phone
             ],
             supportedInterfaceOrientations: [
-                .landscapeRight,
-                .portraitUpsideDown(.when(deviceFamilies: [.pad]))
+                .landscapeRight
             ],
             capabilities: [
                 .camera(purposeString: "Signify requires access to your camera and microphone to provide real-time subtitles. Please grant permission to continue."),
@@ -42,7 +41,7 @@ let package = Package(
             name: "AppModule",
             path: ".",
             resources: [
-                .copy("MLModel")
+                .process("MLModel")
             ]
         )
     ]
