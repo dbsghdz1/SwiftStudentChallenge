@@ -7,8 +7,6 @@ struct MyApp: App {
         WindowGroup {
             if #available(iOS 17.0, *) {
                 MainScreen()
-            } else {
-                // Fallback on earlier versions
             }
         }
     }

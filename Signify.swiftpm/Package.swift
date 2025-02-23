@@ -41,7 +41,7 @@ let package = Package(
             name: "AppModule",
             path: ".",
             resources: [
-                .process("MLModel")
+                .copy("Resource")
             ]
         )
     ]

@@ -20,7 +20,7 @@ struct MainScreen: View {
             TabView(selection: $currentPage) {
                 
                 Tab("Home", systemImage: "video", value: .home) {
-                    ContentView(cameraService: CameraService(), voiceService: VoiceService())
+                    ContentView()
                 }
                 
                 Tab("Learn ASL", systemImage: "book", value: .home) {
@@ -40,6 +40,7 @@ struct MainScreen: View {
         }
     }
 }
+
 struct MainScreen_Previews: PreviewProvider {
     static var previews: some View {
         MainScreen()

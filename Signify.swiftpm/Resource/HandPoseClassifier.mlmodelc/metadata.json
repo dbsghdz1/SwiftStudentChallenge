@@ -87,9 +87,9 @@
     "userDefinedMetadata" : {
       "Prediction Window Size" : "1",
       "com.apple.createml.app.tag" : "150.3",
+      "com.apple.coreml.model.preview.type" : "handPoseClassifier",
       "com.apple.createml.app.version" : "6.1",
-      "Target Frame Rate" : "30.0",
-      "com.apple.coreml.model.preview.type" : "handPoseClassifier"
+      "Target Frame Rate" : "30.0"
     },
     "neuralNetworkLayerTypeHistogram" : {
       "Add" : 7,

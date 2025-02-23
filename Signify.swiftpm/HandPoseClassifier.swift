@@ -78,7 +78,7 @@ class HandPoseClassifier {
     /// URL of model assuming it was installed in the same bundle as this class
     class var urlOfModelInThisBundle : URL {
         let bundle = Bundle(for: self)
-        return bundle.url(forResource: "MLModel/HandPoseClassifier", withExtension:"mlmodelc")!
+        return bundle.url(forResource: "Resource/HandPoseClassifier", withExtension:"mlmodelc")!
     }
 
     /**
