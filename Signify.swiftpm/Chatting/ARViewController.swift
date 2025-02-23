@@ -12,33 +12,45 @@ class ARViewController: UIViewController, @preconcurrency ARSessionDelegate {
     
     var arView: ARSCNView!
     private var resetTimer: Timer?
+    
     var alphabetText: String = "" {
         didSet {
             DispatchQueue.main.async { [weak self] in
                 guard let self = self else { return }
-                self.alphabetLabel.text = (self.alphabetLabel.text ?? "") + self.alphabetText
                 
-                self.resetTimer?.invalidate()
-                self.resetTimer = Timer.scheduledTimer(timeInterval: 5.0, target: self, selector: #selector(self.cleanSubtitle), userInfo: nil, repeats: false)
-                let maxWidth = self.view.frame.width * 0.5
-                let maxSize = CGSize(width: maxWidth, height: CGFloat.greatestFiniteMagnitude)
-                let estimatedSize = self.alphabetLabel.sizeThatFits(maxSize)
-                
-                self.alphabetLabel.constraints.forEach { constraint in
-                    if constraint.firstAttribute == .height {
-                        constraint.constant = estimatedSize.height + 20 // 여백 추가
-                    }
+                if self.alphabetText.isEmpty {
+                    self.alphabetLabel.isHidden = true
+                } else {
+                    self.alphabetLabel.isHidden = false
+                    self.alphabetLabel.text = (self.alphabetLabel.text ?? "") + self.alphabetText
+                    
+                    self.resetTimer?.invalidate()
+                    self.resetTimer = Timer.scheduledTimer(timeInterval: 5.0, target: self, selector: #selector(self.cleanSubtitle), userInfo: nil, repeats: false)
+                    
+                    let maxWidth = self.view.frame.width * 0.5
+                    let maxSize = CGSize(width: maxWidth, height: CGFloat.greatestFiniteMagnitude)
+                    let estimatedSize = self.alphabetLabel.sizeThatFits(maxSize)
+                    
+                    let padding: CGFloat = 10
+                    let labelWidth = min(estimatedSize.width + padding * 2, maxWidth)
+                    let labelHeight = estimatedSize.height + padding * 2
+                    
+                    self.alphabetLabel.frame = CGRect(
+                        x: (self.view.frame.width - labelWidth) / 2 - 10,
+                        y: self.view.frame.height - labelHeight - 40,
+                        width: labelWidth,
+                        height: labelHeight
+                    )
                 }
             }
         }
     }
-    
     private var alphabetLabel: UILabel = {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
         label.textColor = .white
-        label.backgroundColor = UIColor.black.withAlphaComponent(0.2)
-        label.font = .systemFont(ofSize: 30, weight: .bold)
+        label.backgroundColor = UIColor.black.withAlphaComponent(0.5)
+        label.font = UIFont.preferredFont(forTextStyle: .title2)
         label.layer.masksToBounds = true
         label.numberOfLines = 0
         label.layer.cornerRadius = 10
@@ -55,35 +67,54 @@ class ARViewController: UIViewController, @preconcurrency ARSessionDelegate {
         checkCameraAccess()
     }
     
+//    override func viewWillAppear(_ animated: Bool) {
+//        super.viewWillAppear(animated)
+//        if isARViewSetup {
+//            setupARView()
+//        }
+//    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+//        arView.session.pause()
+    }
+    
+    @MainActor
     func checkCameraAccess() {
-        let status = AVCaptureDevice.authorizationStatus(for: .video)
-        switch status {
-            case .authorized:
-                setupARView()
-            case .notDetermined:
-                AVCaptureDevice.requestAccess(for: .video) { enabled in
-                    DispatchQueue.main.async {
-                        if enabled {
-                            self.setupARView()
-                        } else {
-                            print("not working...")
-                        }
+        Task {
+            let status = AVCaptureDevice.authorizationStatus(for: .video)
+            switch status {
+                case .authorized:
+                   setupARView()
+                case .notDetermined:
+                    let isAuthorized = await AVCaptureDevice.requestAccess(for: .video)
+                    if isAuthorized {
+                        setupARView()
+                    } else {
+                        print("Camera access denied")
                     }
-                }
-            case .denied, .restricted:
-                print("Check settings..")
-            @unknown default:
-                print("Error")
+                case .denied, .restricted:
+                    print("Check settings..")
+                @unknown default:
+                    print("Error")
+            }
         }
     }
     
+    @MainActor
     func setupARView() {
         arView = ARSCNView(frame: view.bounds)
         arView.session.delegate = self
         view.addSubview(arView)
         
-        let configuration = ARWorldTrackingConfiguration()
+        //        let cameraFrame = CGRect(
+        //            x: 0,                y: 0,
+        //            width: view.frame.width * 2 / 3,
+        //            height: view.frame.height
+        //        )
+        //        arView.frame = cameraFrame
         
+        let configuration = ARWorldTrackingConfiguration()
         if ARFaceTrackingConfiguration.isSupported {
             let faceTrackingConfig = ARFaceTrackingConfiguration()
             arView.session.run(faceTrackingConfig)
@@ -94,10 +125,13 @@ class ARViewController: UIViewController, @preconcurrency ARSessionDelegate {
         
         NSLayoutConstraint.activate([
             alphabetLabel.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20),
-            alphabetLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 10),
-            alphabetLabel.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 0.5),
-            alphabetLabel.heightAnchor.constraint(greaterThanOrEqualToConstant: 50) // 🔹 최소 높이 설정
+            alphabetLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor, constant: -view.frame.width / 4),
+            alphabetLabel.heightAnchor.constraint(greaterThanOrEqualToConstant: 50),
+            alphabetLabel.widthAnchor.constraint(lessThanOrEqualTo: view.widthAnchor, multiplier: 0.5)
         ])
+    }
+    private func setLabel() {
+        
     }
     
     func session(_ session: ARSession, didUpdate frame: ARFrame) {
