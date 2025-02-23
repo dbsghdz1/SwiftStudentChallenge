@@ -11,21 +11,42 @@ import ARKit
 class ARViewController: UIViewController, @preconcurrency ARSessionDelegate {
     
     var arView: ARSCNView!
-    var labelText: String = "" {
+    private var resetTimer: Timer?
+    var alphabetText: String = "" {
         didSet {
             DispatchQueue.main.async { [weak self] in
                 guard let self = self else { return }
-                self.secondLabel.text = self.labelText
-                print(self.labelText)
+                self.alphabetLabel.text = (self.alphabetLabel.text ?? "") + self.alphabetText
+                
+                self.resetTimer?.invalidate()
+                self.resetTimer = Timer.scheduledTimer(timeInterval: 5.0, target: self, selector: #selector(self.cleanSubtitle), userInfo: nil, repeats: false)
+                let maxWidth = self.view.frame.width * 0.5
+                let maxSize = CGSize(width: maxWidth, height: CGFloat.greatestFiniteMagnitude)
+                let estimatedSize = self.alphabetLabel.sizeThatFits(maxSize)
+                
+                self.alphabetLabel.constraints.forEach { constraint in
+                    if constraint.firstAttribute == .height {
+                        constraint.constant = estimatedSize.height + 20 // 여백 추가
+                    }
+                }
             }
-            
         }
     }
     
-    private var label: UILabel = UILabel()
-    private var secondLabel = UILabel()
-    private var thirdLabel = UILabel()
-    private var stackView: UIStackView = UIStackView()
+    private var alphabetLabel: UILabel = {
+        let label = UILabel()
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.textColor = .white
+        label.backgroundColor = UIColor.black.withAlphaComponent(0.2)
+        label.font = .systemFont(ofSize: 30, weight: .bold)
+        label.layer.masksToBounds = true
+        label.numberOfLines = 0
+        label.layer.cornerRadius = 10
+        label.textAlignment = .center
+        label.lineBreakMode = .byWordWrapping
+        return label
+    }()
+    
     private var frameCounter = 0
     private let handPosePredictionInterval = 30
     
@@ -37,22 +58,22 @@ class ARViewController: UIViewController, @preconcurrency ARSessionDelegate {
     func checkCameraAccess() {
         let status = AVCaptureDevice.authorizationStatus(for: .video)
         switch status {
-        case .authorized:
-            setupARView()
-        case .notDetermined:
-            AVCaptureDevice.requestAccess(for: .video) { enabled in
-                DispatchQueue.main.async {
-                    if enabled {
-                        self.setupARView()
-                    } else {
-                        print("not working...")
+            case .authorized:
+                setupARView()
+            case .notDetermined:
+                AVCaptureDevice.requestAccess(for: .video) { enabled in
+                    DispatchQueue.main.async {
+                        if enabled {
+                            self.setupARView()
+                        } else {
+                            print("not working...")
+                        }
                     }
                 }
-            }
-        case .denied, .restricted:
-            print("Check settings..")
-        @unknown default:
-            print("Error")
+            case .denied, .restricted:
+                print("Check settings..")
+            @unknown default:
+                print("Error")
         }
     }
     
@@ -69,46 +90,33 @@ class ARViewController: UIViewController, @preconcurrency ARSessionDelegate {
         } else {
             arView.session.run(configuration)
         }
-        thirdLabel = UILabel(frame: .init(x: 0, y: 0, width: 300, height: 12))
-        thirdLabel.text = ""
-        thirdLabel.textColor = .black
-        thirdLabel.font = .systemFont(ofSize: 26)
-        thirdLabel.backgroundColor = .lightText
-        thirdLabel.textAlignment  = .center
+        view.addSubview(alphabetLabel)
         
-        label = UILabel(frame: .init(x: 0, y: 0, width: self.view.frame.width, height: 30))
-        label.text = labelText
-        label.textColor = .white
-        label.font = .systemFont(ofSize: 65)
-        
-        stackView = .init(frame: .init(x: 0, y: 40, width: (self.view.frame.width), height: 200))
-        stackView.axis = .vertical
-        stackView.distribution = .equalCentering
-        stackView.addArrangedSubview(secondLabel)
-        stackView.addArrangedSubview(thirdLabel)
-        stackView.spacing = 2
-        stackView.layoutMargins = .init(top: 10, left: 30, bottom: 10, right: 30)
-        
-        view.addSubview(stackView)
+        NSLayoutConstraint.activate([
+            alphabetLabel.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20),
+            alphabetLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 10),
+            alphabetLabel.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 0.5),
+            alphabetLabel.heightAnchor.constraint(greaterThanOrEqualToConstant: 50) // 🔹 최소 높이 설정
+        ])
     }
     
     func session(_ session: ARSession, didUpdate frame: ARFrame) {
         frameCounter += 1
         guard frameCounter % handPosePredictionInterval == 0 else { return }
-
+        
         let pixelBuffer = frame.capturedImage
-
+        
         Task {
             let cgImage = convertCIImageToCGImage(CIImage(cvPixelBuffer: pixelBuffer))
             guard let cgImage else { return }
-
+            
             DispatchQueue.global(qos: .userInitiated).async { [weak self] in
                 guard let self = self else { return }
-
+                
                 let handPoseRequest = VNDetectHumanHandPoseRequest()
                 handPoseRequest.maximumHandCount = 1
                 handPoseRequest.revision = VNDetectContourRequestRevision1
-
+                
                 autoreleasepool {
                     let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
                     do {
@@ -117,29 +125,28 @@ class ARViewController: UIViewController, @preconcurrency ARSessionDelegate {
                         print("Human Pose Request failed: \(error.localizedDescription)")
                         return
                     }
-
+                    
                     guard
                         let handObservations = handPoseRequest.results?.first
                     else { return }
-
+                    
                     guard
                         let keypointsMultiArray = try? handObservations.keypointsMultiArray()
                     else { return }
-
+                    
                     do {
                         let config = MLModelConfiguration()
                         config.computeUnits = .cpuAndGPU
                         let model = try HandPoseClassifier(configuration: config)
                         let handPosePrediction = try model.prediction(poses: keypointsMultiArray)
-
+                        
                         let confidence = handPosePrediction.labelProbabilities[handPosePrediction.label] ?? 0.0
                         
                         let label = handPosePrediction.label
-
+                        
                         DispatchQueue.main.async {
-                            self.thirdLabel.text = "\(self.convertToPercentage(confidence))%"
-                            if confidence > 0.85 {
-                                self.labelText = label
+                            if confidence > 0.88 {
+                                self.alphabetText = label
                             }
                         }
                     } catch {
@@ -150,11 +157,11 @@ class ARViewController: UIViewController, @preconcurrency ARSessionDelegate {
         }
     }
     
-    private func cleanEmojii() {
-        
+    @objc
+    private func cleanSubtitle() {
         DispatchQueue.main.async {
-            self.labelText = ""
-            self.secondLabel.text = ""
+            self.alphabetText = ""
+            self.alphabetLabel.text = ""
         }
     }
     

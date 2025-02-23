@@ -11,16 +11,16 @@ import ARKit
 
 struct ARViewContainer: UIViewControllerRepresentable {
 
-    @Binding var labelText: String
+    @Binding var alphabet: String
 
     func makeUIViewController(context: Context) -> some UIViewController {
         let arViewController = ARViewController()
-        arViewController.labelText = labelText
+        arViewController.alphabetText = alphabet
         return arViewController
     }
     
     func updateUIViewController(_ uiViewController: UIViewControllerType, context: Context) {
         let viewController = uiViewController as? ARViewController
-        viewController?.labelText = labelText
+        viewController?.alphabetText = alphabet
     }
 }
