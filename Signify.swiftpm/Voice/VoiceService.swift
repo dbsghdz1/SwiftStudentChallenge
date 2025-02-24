@@ -10,7 +10,7 @@ import Foundation
 import Speech
 
 actor VoiceService: ObservableObject {
-    @MainActor @Published var transcript: String = ""
+    @MainActor @Published var subtitle: String = ""
     
     private var audioEngine: AVAudioEngine?
     private var request: SFSpeechAudioBufferRecognitionRequest?
@@ -35,7 +35,7 @@ actor VoiceService: ObservableObject {
     
     @MainActor func startSpeaking() {
         Task {
-            await transcribe()
+            await transSubtitle()
         }
     }
     
@@ -51,10 +51,10 @@ actor VoiceService: ObservableObject {
         }
     }
     
-    private func transcribe() {
-        guard let recognizer, recognizer.isAvailable else {
-            return
-        }
+    private func transSubtitle() {
+        guard
+            let recognizer, recognizer.isAvailable
+        else { return }
         
         do {
             let (audioEngine, request) = try Self.prepareEngine()
@@ -108,19 +108,17 @@ actor VoiceService: ObservableObject {
         }
         
         if let result {
-            transcribe(result.bestTranscription.formattedString)
+            sendResult(result.bestTranscription.formattedString)
         }
     }
     
-    
-    nonisolated private func transcribe(_ message: String) {
+    nonisolated private func sendResult(_ message: String) {
         Task { @MainActor in
-            transcript = message
+            subtitle = message
             print(message)
         }
     }
 }
-
 
 extension SFSpeechRecognizer {
     static func hasAuthorizationToRecognize() async -> Bool {
@@ -131,7 +129,6 @@ extension SFSpeechRecognizer {
         }
     }
 }
-
 
 extension AVAudioSession {
     func hasPermissionToRecord() async -> Bool {
