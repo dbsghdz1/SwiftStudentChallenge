@@ -7,7 +7,7 @@ struct ContentView: View {
     
     var body: some View {
         ZStack {
-            ARViewContainer(alphabet: $alphabet)
+            ARViewContainer(alphabet: $alphabet, isLearningMode: false)
                 .edgesIgnoringSafeArea(.all)
             
             VStack {
@@ -15,20 +15,25 @@ struct ContentView: View {
                 
                 HStack {
                     Spacer()
-                    Text(voiceService.subtitle)
-                        .padding()
-                        .foregroundStyle(.white)
-                        .background(Color.black.opacity(0.5))
-                        .cornerRadius(10)
-                        .font(.title2)
-                        .frame(maxWidth: UIScreen.main.bounds.width * 0.5)
-                        .padding(.horizontal, 10)
+                    if !voiceService.subtitle.isEmpty {
+                        Text(voiceService.subtitle)
+                            .padding()
+                            .foregroundStyle(.white)
+                            .background(Color.black.opacity(0.5))
+                            .cornerRadius(10)
+                            .font(.title2)
+                            .frame(maxWidth: UIScreen.main.bounds.width * 0.5)
+                            .padding(.horizontal, 10)
+                    }
                 }
                 .padding(.bottom, 20) 
             }
         }
         .onAppear {
             voiceService.startSpeaking()
+        }
+        .onDisappear {
+            voiceService.stopSpeaking()
         }
     }
 }

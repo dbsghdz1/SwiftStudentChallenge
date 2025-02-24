@@ -10,8 +10,33 @@ import ARKit
 
 class ARViewController: UIViewController, @preconcurrency ARSessionDelegate {
     
-    var arView: ARSCNView!
+    var arView = ARSCNView()
     private var resetTimer: Timer?
+    private var isARViewSetup = false
+    private var isLearningMode: Bool
+    
+    init(isLearningMode: Bool) {
+        self.isLearningMode = isLearningMode
+        super.init(nibName: nil, bundle: nil)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    private var percentageLabel: UILabel = {
+        let label = UILabel()
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.textColor = .white
+        label.backgroundColor = UIColor.black.withAlphaComponent(0.5)
+        label.font = UIFont.preferredFont(forTextStyle: .title2)
+        label.layer.masksToBounds = true
+        label.layer.cornerRadius = 10
+        label.textAlignment = .center
+        label.lineBreakMode = .byWordWrapping
+        label.text = "Confidence: 0%"
+        return label
+    }()
     
     var alphabetText: String = "" {
         didSet {
@@ -45,6 +70,7 @@ class ARViewController: UIViewController, @preconcurrency ARSessionDelegate {
             }
         }
     }
+    
     private var alphabetLabel: UILabel = {
         let label = UILabel()
         label.translatesAutoresizingMaskIntoConstraints = false
@@ -67,16 +93,16 @@ class ARViewController: UIViewController, @preconcurrency ARSessionDelegate {
         checkCameraAccess()
     }
     
-//    override func viewWillAppear(_ animated: Bool) {
-//        super.viewWillAppear(animated)
-//        if isARViewSetup {
-//            setupARView()
-//        }
-//    }
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        if isARViewSetup {
+            setupARView()
+        }
+    }
     
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
-//        arView.session.pause()
+        arView.session.pause()
     }
     
     @MainActor
@@ -85,7 +111,7 @@ class ARViewController: UIViewController, @preconcurrency ARSessionDelegate {
             let status = AVCaptureDevice.authorizationStatus(for: .video)
             switch status {
                 case .authorized:
-                   setupARView()
+                    setupARView()
                 case .notDetermined:
                     let isAuthorized = await AVCaptureDevice.requestAccess(for: .video)
                     if isAuthorized {
@@ -106,13 +132,25 @@ class ARViewController: UIViewController, @preconcurrency ARSessionDelegate {
         arView = ARSCNView(frame: view.bounds)
         arView.session.delegate = self
         view.addSubview(arView)
-        
-        //        let cameraFrame = CGRect(
-        //            x: 0,                y: 0,
-        //            width: view.frame.width * 2 / 3,
-        //            height: view.frame.height
-        //        )
-        //        arView.frame = cameraFrame
+        isARViewSetup = true
+        if isLearningMode {
+            
+            view.addSubview(percentageLabel)
+            
+            NSLayoutConstraint.activate([
+                percentageLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 20),
+                percentageLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+                percentageLabel.heightAnchor.constraint(equalToConstant: 40),
+                percentageLabel.widthAnchor.constraint(greaterThanOrEqualToConstant: 120)
+            ])
+            let cameraFrame = CGRect(
+                x: 0,
+                y: 0,
+                width: view.frame.width,
+                height: view.frame.height
+            )
+            arView.frame = cameraFrame
+        }
         
         let configuration = ARWorldTrackingConfiguration()
         if ARFaceTrackingConfiguration.isSupported {
@@ -121,17 +159,17 @@ class ARViewController: UIViewController, @preconcurrency ARSessionDelegate {
         } else {
             arView.session.run(configuration)
         }
-        view.addSubview(alphabetLabel)
         
-        NSLayoutConstraint.activate([
-            alphabetLabel.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20),
-            alphabetLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor, constant: -view.frame.width / 4),
-            alphabetLabel.heightAnchor.constraint(greaterThanOrEqualToConstant: 50),
-            alphabetLabel.widthAnchor.constraint(lessThanOrEqualTo: view.widthAnchor, multiplier: 0.5)
-        ])
-    }
-    private func setLabel() {
-        
+        if !isLearningMode {
+            view.addSubview(alphabetLabel)
+            
+            NSLayoutConstraint.activate([
+                alphabetLabel.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20),
+                alphabetLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor, constant: -view.frame.width / 4),
+                alphabetLabel.heightAnchor.constraint(greaterThanOrEqualToConstant: 50),
+                alphabetLabel.widthAnchor.constraint(lessThanOrEqualTo: view.widthAnchor, multiplier: 0.5)
+            ])
+        }
     }
     
     func session(_ session: ARSession, didUpdate frame: ARFrame) {
@@ -177,10 +215,15 @@ class ARViewController: UIViewController, @preconcurrency ARSessionDelegate {
                         let confidence = handPosePrediction.labelProbabilities[handPosePrediction.label] ?? 0.0
                         
                         let label = handPosePrediction.label
-                        
+                        let percentage = Float(Int((confidence * 1000))) / 10
                         DispatchQueue.main.async {
+                            self.percentageLabel.text = "Confidence: \(String(percentage))%"
                             if confidence > 0.88 {
-                                self.alphabetText = label
+                                if label == "space" {
+                                    self.alphabetText = " "
+                                } else {
+                                    self.alphabetText = label.lowercased()
+                                }
                             }
                         }
                     } catch {

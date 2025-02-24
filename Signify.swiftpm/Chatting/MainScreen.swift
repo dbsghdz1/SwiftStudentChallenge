@@ -8,41 +8,28 @@
 import SwiftUI
 
 enum Pages: String, Hashable {
-    case home, camera, onboarding
+    case chat, learn, howToUse
 }
 
 struct MainScreen: View {
-    @State var currentPage: Pages = .home
-    
+    @State var currentPage: Pages = .chat
     var body: some View {
         
         if #available(iOS 18.0, *) {
             TabView(selection: $currentPage) {
                 
-                Tab("Home", systemImage: "video", value: .home) {
+                Tab("Chat", systemImage: "video", value: .chat) {
                     ContentView()
                 }
                 
-                Tab("Learn ASL", systemImage: "book", value: .home) {
+                Tab("Learn ASL", systemImage: "book", value: .learn) {
                     LearningScreen()
                 }
                 
-                Tab("How to Use", systemImage: "questionmark.text.page", value: .home) {
-                    Text("home")
+                Tab("How to Use", systemImage: "questionmark.text.page", value: .howToUse) {
+                    HowToUse()
                 }
             }
-            .tabViewStyle(.sidebarAdaptable)
-            .tabViewSidebarHeader {
-                Label("Signify", systemImage: "person.crop.circle")
-                    .font(.title)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            }
         }
-    }
-}
-
-struct MainScreen_Previews: PreviewProvider {
-    static var previews: some View {
-        MainScreen()
     }
 }

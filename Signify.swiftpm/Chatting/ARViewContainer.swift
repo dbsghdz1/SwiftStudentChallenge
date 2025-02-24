@@ -12,9 +12,10 @@ import ARKit
 struct ARViewContainer: UIViewControllerRepresentable {
 
     @Binding var alphabet: String
+    var isLearningMode: Bool
 
     func makeUIViewController(context: Context) -> some UIViewController {
-        let arViewController = ARViewController()
+        let arViewController = ARViewController(isLearningMode: isLearningMode)
         arViewController.alphabetText = alphabet
         return arViewController
     }
