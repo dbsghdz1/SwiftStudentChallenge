@@ -20,7 +20,7 @@ let package = Package(
             teamIdentifier: "B6QMD2854G",
             displayVersion: "1.0",
             bundleVersion: "1",
-            appIcon: .placeholder(icon: .weights),
+            appIcon: .placeholder(icon: .twoPeople),
             accentColor: .presetColor(.green),
             supportedDeviceFamilies: [
                 .pad,
@@ -30,9 +30,9 @@ let package = Package(
                 .landscapeRight
             ],
             capabilities: [
-                .camera(purposeString: "Signify requires access to your camera and microphone to provide real-time subtitles. Please grant permission to continue."),
-                .microphone(purposeString: "To use Signify, please allow access to your camera for sign language recognition and your microphone for speech transcription."),
-                .speechRecognition(purposeString: "To use Signify, please allow access to your camera for sign language recognition and your microphone for speech transcription.")
+                .camera(purposeString: "Signify needs access to your camera to recognize sign language."),
+                .microphone(purposeString: "Signify needs access to your microphone to convert speech into subtitles."),
+                .speechRecognition(purposeString: "Signify needs access to speech recognition to transcribe spoken words into text.")
             ]
         )
     ],
